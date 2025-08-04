@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-chart-line text-primary me-2"></i>
+            {{ 'Today\'s Summary' if session.get('language', 'bn') == 'en' else 'আজকের সারাংশ' }}
+        </h1>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="stats-card">
+            <div class="stats-number">{{ "%.0f"|format(total_calories) }}</div>
+            <div class="stats-label">{{ 'Calories (Today)' if session.get('language', 'bn') == 'en' else 'ক্যালরি (আজ)' }}</div>
+            <div class="mt-2">
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ [total_calories / user.target_calories * 100, 100] | min }}%"></div>
+                </div>
+                <small class="text-white-50">{{ "%.0f"|format(total_calories) }}/{{ user.target_calories }} {{ 'Calories' if session.get('language', 'bn') == 'en' else 'ক্যালরি' }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_water }}</div>
+            <div class="stats-label">{{ 'Glasses of Water' if session.get('language', 'bn') == 'en' else 'গ্লাস পানি' }}</div>
+            <div class="mt-2">
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ [total_water / 8 * 100, 100] | min }}%"></div>
+                </div>
+                <small class="text-white-50">{{ total_water }}/8 {{ 'Glasses' if session.get('language', 'bn') == 'en' else 'গ্লাস' }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">
+            <i class="fas fa-bolt text-warning me-2"></i>
+            {{ 'Quick Actions' if session.get('language', 'bn') == 'en' else 'দ্রুত কাজ' }}
+        </h3>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-utensils text-primary mb-3" style="font-size: 2rem;"></i>
+                <h5 class="card-title">{{ 'Add Food' if session.get('language', 'bn') == 'en' else 'খাবার যোগ করুন' }}</h5>
+                <p class="card-text">{{ 'Log your food intake' if session.get('language', 'bn') == 'en' else 'আপনার খাবার লগ করুন' }}</p>
+                <a href="{{ url_for('food_tracking') }}" class="btn btn-primary">{{ 'Add' if session.get('language', 'bn') == 'en' else 'যোগ করুন' }}</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-dumbbell text-success mb-3" style="font-size: 2rem;"></i>
+                <h5 class="card-title">{{ 'Add Exercise' if session.get('language', 'bn') == 'en' else 'ব্যায়াম যোগ করুন' }}</h5>
+                <p class="card-text">{{ 'Log your workout' if session.get('language', 'bn') == 'en' else 'আপনার ব্যায়াম লগ করুন' }}</p>
+                <a href="{{ url_for('exercise_tracking') }}" class="btn btn-success">{{ 'Add' if session.get('language', 'bn') == 'en' else 'যোগ করুন' }}</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-tint text-info mb-3" style="font-size: 2rem;"></i>
+                <h5 class="card-title">{{ 'Add Water' if session.get('language', 'bn') == 'en' else 'পানি যোগ করুন' }}</h5>
+                <p class="card-text">{{ 'Track your water intake' if session.get('language', 'bn') == 'en' else 'আপনার পানি গ্রহণ ট্র্যাক করুন' }}</p>
+                <button class="btn btn-info" onclick="addWater()">{{ 'Add' if session.get('language', 'bn') == 'en' else 'যোগ করুন' }}</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-warehouse text-warning mb-3" style="font-size: 2rem;"></i>
+                <h5 class="card-title">{{ 'View Pantry' if session.get('language', 'bn') == 'en' else 'প্যান্ট্রি দেখুন' }}</h5>
+                <p class="card-text">{{ 'Your saved foods' if session.get('language', 'bn') == 'en' else 'আপনার সেভ করা খাবার' }}</p>
+                <a href="{{ url_for('pantry') }}" class="btn btn-warning">{{ 'View' if session.get('language', 'bn') == 'en' else 'দেখুন' }}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Activities -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-utensils me-2"></i>
+                    {{ 'Today\'s Food' if session.get('language', 'bn') == 'en' else 'আজকের খাবার' }}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if food_logs %}
+                    {% for log in food_logs %}
+                        {% set food = food_logs[loop.index0].food %}
+                        <div class="food-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ food.name_bangla }}</h6>
+                                    <small class="text-muted">{{ food.name_english }} • {{ log.amount }}g</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success">{{ "%.0f"|format(log.amount * food.calories_per_100g / 100) }} {{ 'Calories' if session.get('language', 'bn') == 'en' else 'ক্যালরি' }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ log.meal_type }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center py-3">{{ 'No food logged today' if session.get('language', 'bn') == 'en' else 'আজ কোনো খাবার যোগ করা হয়নি' }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-dumbbell me-2"></i>
+                    {{ 'Today\'s Exercise' if session.get('language', 'bn') == 'en' else 'আজকের ব্যায়াম' }}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if exercise_logs %}
+                    {% for log in exercise_logs %}
+                        {% set exercise = exercise_logs[loop.index0].exercise %}
+                        <div class="exercise-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ exercise.name_bangla }}</h6>
+                                    <small class="text-muted">{{ exercise.name_english }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-info">{{ log.duration }} {{ 'Minutes' if session.get('language', 'bn') == 'en' else 'মিনিট' }}</span>
+                                    {% if log.sets and log.reps %}
+                                        <br>
+                                        <small class="text-muted">{{ log.sets }} {{ 'Sets' if session.get('language', 'bn') == 'en' else 'সেট' }} x {{ log.reps }} {{ 'Reps' if session.get('language', 'bn') == 'en' else 'বার' }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center py-3">{{ 'No exercise logged today' if session.get('language', 'bn') == 'en' else 'আজ কোনো ব্যায়াম যোগ করা হয়নি' }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Profile Summary -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    {{ 'Your Profile' if session.get('language', 'bn') == 'en' else 'আপনার প্রোফাইল' }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <i class="fas fa-user-circle text-primary" style="font-size: 3rem;"></i>
+                        <h6 class="mt-2">{{ user.name }}</h6>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-muted">{{ 'Age' if session.get('language', 'bn') == 'en' else 'বয়স' }}</h6>
+                        <h5>{{ user.age }} {{ 'Years' if session.get('language', 'bn') == 'en' else 'বছর' }}</h5>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-muted">{{ 'Weight' if session.get('language', 'bn') == 'en' else 'ওজন' }}</h6>
+                        <h5>{{ user.weight }} {{ 'kg' if session.get('language', 'bn') == 'en' else 'কেজি' }}</h5>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h6 class="text-muted">{{ 'Goal' if session.get('language', 'bn') == 'en' else 'লক্ষ্য' }}</h6>
+                        <h5>
+                            {% if user.goal == 'weight_loss' %}
+                                <span class="badge bg-danger">{{ 'Weight Loss' if session.get('language', 'bn') == 'en' else 'ওজন কমানো' }}</span>
+                            {% elif user.goal == 'weight_gain' %}
+                                <span class="badge bg-warning">{{ 'Weight Gain' if session.get('language', 'bn') == 'en' else 'ওজন বাড়ানো' }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ 'Maintain' if session.get('language', 'bn') == 'en' else 'বজায় রাখা' }}</span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addWater() {
+    const promptText = '{{ "How many glasses of water did you drink?" if session.get("language", "bn") == "en" else "কত গ্লাস পানি খেয়েছেন?" }}';
+    const glasses = prompt(promptText, '1');
+    if (glasses && !isNaN(glasses)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("add_water") }}';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'glasses';
+        input.value = glasses;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %} 

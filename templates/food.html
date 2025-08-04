@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-utensils text-primary me-2"></i>
+            {{ 'Food Tracking' if session.get('language', 'bn') == 'en' else 'খাবার ট্র্যাকিং' }}
+        </h1>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="foodSearch" placeholder="{{ 'Search food...' if session.get('language', 'bn') == 'en' else 'খাবার খুঁজুন...' }}">
+                    <button class="btn btn-primary" onclick="searchFood()">
+                        <i class="fas fa-search me-1"></i>{{ 'Search' if session.get('language', 'bn') == 'en' else 'খুঁজুন' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Food Categories -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="mb-3">
+            <i class="fas fa-th-large text-success me-2"></i>
+            {{ 'Food Categories' if session.get('language', 'bn') == 'en' else 'খাবারের ধরন' }}
+        </h3>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-primary active" onclick="filterByCategory('all')">{{ 'All' if session.get('language', 'bn') == 'en' else 'সব' }}</button>
+            {% for category in categories %}
+                <button class="btn btn-outline-primary" onclick="filterByCategory('{{ category[0] }}')">
+                    {{ category[0] }}
+                </button>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Food Items -->
+<div class="row" id="foodItems">
+    {% for food in foods %}
+    <div class="col-md-6 col-lg-4 mb-3 food-card" data-category="{{ food.category }}">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="card-title mb-1">{{ food.name_bangla }}</h5>
+                        <h6 class="card-subtitle text-muted">{{ food.name_english }}</h6>
+                    </div>
+                    <span class="badge bg-primary">{{ food.category }}</span>
+                </div>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <small class="text-muted d-block">{{ 'Calories' if session.get('language', 'bn') == 'en' else 'ক্যালরি' }}</small>
+                        <strong>{{ food.calories_per_100g }}</strong>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block">{{ 'Protein' if session.get('language', 'bn') == 'en' else 'প্রোটিন' }}</small>
+                        <strong>{{ food.protein }}g</strong>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block">{{ 'Carbs' if session.get('language', 'bn') == 'en' else 'কার্ব' }}</small>
+                        <strong>{{ food.carbs }}g</strong>
+                    </div>
+                </div>
+                
+                <small class="text-muted d-block mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    {{ food.serving_size }} ({{ food.serving_weight }}g)
+                </small>
+                
+                <button class="btn btn-success w-100" onclick="showAddFoodModal({{ food.id }}, '{{ food.name_bangla }}', {{ food.calories_per_100g }})">
+                    <i class="fas fa-plus me-1"></i>{{ 'Add' if session.get('language', 'bn') == 'en' else 'যোগ করুন' }}
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Food Modal -->
+<div class="modal fade" id="addFoodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">খাবার যোগ করুন</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_food') }}">
+                <div class="modal-body">
+                    <input type="hidden" id="foodId" name="food_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">খাবারের নাম</label>
+                        <input type="text" class="form-control" id="foodName" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">পরিমাণ (গ্রাম)</label>
+                        <input type="number" class="form-control" name="amount" value="100" min="1" step="1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">খাবারের ধরন</label>
+                        <select class="form-select" name="meal_type">
+                            <option value="breakfast">সকালের নাস্তা</option>
+                            <option value="lunch">দুপুরের খাবার</option>
+                            <option value="dinner">রাতের খাবার</option>
+                            <option value="snack">নাস্তা</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-calculator me-2"></i>
+                        আনুমানিক ক্যালরি: <span id="estimatedCalories">0</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="submit" class="btn btn-primary">যোগ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentFood = null;
+
+function searchFood() {
+    const searchTerm = document.getElementById('foodSearch').value.toLowerCase();
+    const foodCards = document.querySelectorAll('.food-card');
+    
+    foodCards.forEach(card => {
+        const foodName = card.querySelector('.card-title').textContent.toLowerCase();
+        const englishName = card.querySelector('.card-subtitle').textContent.toLowerCase();
+        
+        if (foodName.includes(searchTerm) || englishName.includes(searchTerm)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function filterByCategory(category) {
+    const foodCards = document.querySelectorAll('.food-card');
+    const buttons = document.querySelectorAll('.btn-outline-primary');
+    
+    // Update active button
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    foodCards.forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function showAddFoodModal(foodId, foodName, caloriesPer100g) {
+    currentFood = { id: foodId, name: foodName, caloriesPer100g: caloriesPer100g };
+    
+    document.getElementById('foodId').value = foodId;
+    document.getElementById('foodName').value = foodName;
+    
+    // Calculate initial calories
+    const amount = document.querySelector('input[name="amount"]').value;
+    const estimatedCalories = Math.round((amount * caloriesPer100g) / 100);
+    document.getElementById('estimatedCalories').textContent = estimatedCalories;
+    
+    // Update calories when amount changes
+    document.querySelector('input[name="amount"]').addEventListener('input', function() {
+        const amount = this.value;
+        const estimatedCalories = Math.round((amount * caloriesPer100g) / 100);
+        document.getElementById('estimatedCalories').textContent = estimatedCalories;
+    });
+    
+    const modal = new bootstrap.Modal(document.getElementById('addFoodModal'));
+    modal.show();
+}
+
+// Search on Enter key
+document.getElementById('foodSearch').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchFood();
+    }
+});
+</script>
+{% endblock %} 

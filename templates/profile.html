@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-user text-info me-2"></i>
+            প্রোফাইল
+        </h1>
+    </div>
+</div>
+
+<!-- Profile Information -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-circle me-2"></i>
+                    প্রোফাইল তথ্য
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">নাম</label>
+                            <input type="text" class="form-control" value="{{ user.name }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">বয়স</label>
+                            <input type="number" class="form-control" value="{{ user.age }}" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">ওজন (কেজি)</label>
+                            <input type="number" class="form-control" value="{{ user.weight }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">উচ্চতা (সেমি)</label>
+                            <input type="number" class="form-control" value="{{ user.height }}" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">ফিটনেস লক্ষ্য</label>
+                            <input type="text" class="form-control" value="
+                                {% if user.goal == 'weight_loss' %}
+                                    ওজন কমানো
+                                {% elif user.goal == 'weight_gain' %}
+                                    ওজন বাড়ানো
+                                {% else %}
+                                    ওজন বজায় রাখা
+                                {% endif %}
+                            " readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">দৈনিক ক্যালরি লক্ষ্য</label>
+                            <input type="number" class="form-control" value="{{ user.target_calories }}" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="editProfile()">
+                    <i class="fas fa-edit me-1"></i>প্রোফাইল সম্পাদনা করুন
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    স্বাস্থ্য সূচক
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <h6 class="text-muted">BMI</h6>
+                    <h3 class="text-primary">
+                        {% set bmi = (user.weight / ((user.height / 100) ** 2)) | round(1) %}
+                        {{ bmi }}
+                    </h3>
+                    <small class="text-muted">
+                        {% if bmi < 18.5 %}
+                            কম ওজন
+                        {% elif bmi < 25 %}
+                            স্বাভাবিক
+                        {% elif bmi < 30 %}
+                            অতিরিক্ত ওজন
+                        {% else %}
+                            স্থূলতা
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-muted">BMR</h6>
+                    <h3 class="text-success">
+                        {% set bmr = (10 * user.weight + 6.25 * user.height - 5 * user.age + 5) | round %}
+                        {{ bmr }}
+                    </h3>
+                    <small class="text-muted">ক্যালরি/দিন</small>
+                </div>
+                
+                <div>
+                    <h6 class="text-muted">TDEE</h6>
+                    <h3 class="text-info">
+                        {% set tdee = (bmr * 1.55) | round %}
+                        {{ tdee }}
+                    </h3>
+                    <small class="text-muted">ক্যালরি/দিন</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>
+                    সেটিংস
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-3">সাধারণ সেটিংস</h6>
+                        <div class="list-group">
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-edit text-primary me-2"></i>
+                                    প্রোফাইল সম্পাদনা করুন
+                                </div>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-bullseye text-success me-2"></i>
+                                    লক্ষ্য পরিবর্তন করুন
+                                </div>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-language text-info me-2"></i>
+                                    ভাষা পরিবর্তন করুন
+                                </div>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="mb-3">বিজ্ঞপ্তি সেটিংস</h6>
+                        <div class="list-group">
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-bell text-warning me-2"></i>
+                                    বিজ্ঞপ্তি সেটিংস
+                                </div>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-download text-success me-2"></i>
+                                    ডেটা রপ্তানি করুন
+                                </div>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-question-circle text-info me-2"></i>
+                                    সাহায্য
+                                </div>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-outline-danger" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-1"></i>লগআউট
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="exportData()">
+                                <i class="fas fa-download me-1"></i>ডেটা রপ্তানি করুন
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">প্রোফাইল সম্পাদনা করুন</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">নাম</label>
+                                <input type="text" class="form-control" value="{{ user.name }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">বয়স</label>
+                                <input type="number" class="form-control" value="{{ user.age }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ওজন (কেজি)</label>
+                                <input type="number" class="form-control" value="{{ user.weight }}" step="0.1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">উচ্চতা (সেমি)</label>
+                                <input type="number" class="form-control" value="{{ user.height }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">ফিটনেস লক্ষ্য</label>
+                                <select class="form-select">
+                                    <option value="weight_loss" {% if user.goal == 'weight_loss' %}selected{% endif %}>ওজন কমানো</option>
+                                    <option value="weight_gain" {% if user.goal == 'weight_gain' %}selected{% endif %}>ওজন বাড়ানো</option>
+                                    <option value="maintenance" {% if user.goal == 'maintenance' %}selected{% endif %}>ওজন বজায় রাখা</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">দৈনিক ক্যালরি লক্ষ্য</label>
+                                <input type="number" class="form-control" value="{{ user.target_calories }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="submit" class="btn btn-primary">সংরক্ষণ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editProfile() {
+    const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    modal.show();
+}
+
+function logout() {
+    if (confirm('আপনি কি লগআউট করতে চান?')) {
+        alert('লগআউট ফিচারটি শীঘ্রই আসবে!');
+    }
+}
+
+function exportData() {
+    alert('ডেটা রপ্তানি ফিচারটি শীঘ্রই আসবে!');
+}
+</script>
+{% endblock %} 

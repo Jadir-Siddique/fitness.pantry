@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-warehouse text-warning me-2"></i>
+            আমার প্যান্ট্রি
+        </h1>
+    </div>
+</div>
+
+<!-- Add to Pantry Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    প্যান্ট্রিতে যোগ করুন
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_to_pantry') }}">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">খাবার নির্বাচন করুন</label>
+                                <select class="form-select" name="food_id" required>
+                                    <option value="">খাবার নির্বাচন করুন...</option>
+                                    {% for food in foods %}
+                                        <option value="{{ food.id }}">{{ food.name_bangla }} ({{ food.name_english }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">কাস্টম নাম (ঐচ্ছিক)</label>
+                                <input type="text" class="form-control" name="custom_name" placeholder="যেমন: আমার বিশেষ ভাত">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-plus me-1"></i>প্যান্ট্রিতে যোগ করুন
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pantry Items -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    আপনার খাবার
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if pantry_items %}
+                    <div class="row">
+                        {% for item in pantry_items %}
+                            {% set food = item.food %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h6 class="card-title mb-1">
+                                                    {{ item.custom_name if item.custom_name else food.name_bangla }}
+                                                </h6>
+                                                <small class="text-muted">
+                                                    {{ food.name_english if not item.custom_name else food.name_bangla }}
+                                                </small>
+                                            </div>
+                                            <span class="badge bg-primary">{{ food.category }}</span>
+                                        </div>
+                                        
+                                        <div class="row text-center mb-3">
+                                            <div class="col-4">
+                                                <small class="text-muted d-block">ক্যালরি</small>
+                                                <strong>{{ food.calories_per_100g }}</strong>
+                                            </div>
+                                            <div class="col-4">
+                                                <small class="text-muted d-block">প্রোটিন</small>
+                                                <strong>{{ food.protein }}g</strong>
+                                            </div>
+                                            <div class="col-4">
+                                                <small class="text-muted d-block">কার্ব</small>
+                                                <strong>{{ food.carbs }}g</strong>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-success flex-fill" onclick="quickAddFood({{ food.id }}, '{{ food.name_bangla }}', {{ food.calories_per_100g }})">
+                                                <i class="fas fa-plus me-1"></i>দ্রুত যোগ করুন
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="removeFromPantry({{ item.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-warehouse text-muted mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted">আপনার প্যান্ট্রি খালি</h5>
+                        <p class="text-muted">আপনার প্রিয় খাবার যোগ করুন যাতে দ্রুত লগ করতে পারেন</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Add Food Modal -->
+<div class="modal fade" id="quickAddFoodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">দ্রুত খাবার যোগ করুন</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_food') }}">
+                <div class="modal-body">
+                    <input type="hidden" id="quickFoodId" name="food_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">খাবারের নাম</label>
+                        <input type="text" class="form-control" id="quickFoodName" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">পরিমাণ (গ্রাম)</label>
+                        <input type="number" class="form-control" name="amount" value="100" min="1" step="1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">খাবারের ধরন</label>
+                        <select class="form-select" name="meal_type">
+                            <option value="breakfast">সকালের নাস্তা</option>
+                            <option value="lunch">দুপুরের খাবার</option>
+                            <option value="dinner">রাতের খাবার</option>
+                            <option value="snack">নাস্তা</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-star me-2"></i>
+                        এটি আপনার প্যান্ট্রি থেকে দ্রুত যোগ করা হচ্ছে!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="submit" class="btn btn-success">যোগ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function quickAddFood(foodId, foodName, caloriesPer100g) {
+    document.getElementById('quickFoodId').value = foodId;
+    document.getElementById('quickFoodName').value = foodName;
+    
+    const modal = new bootstrap.Modal(document.getElementById('quickAddFoodModal'));
+    modal.show();
+}
+
+function removeFromPantry(itemId) {
+    if (confirm('আপনি কি এই খাবারটি প্যান্ট্রি থেকে সরাতে চান?')) {
+        // You can implement AJAX call here to remove item
+        alert('এই ফিচারটি শীঘ্রই আসবে!');
+    }
+}
+</script>
+{% endblock %} 

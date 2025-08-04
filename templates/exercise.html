@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-dumbbell text-success me-2"></i>
+            ব্যায়াম ট্র্যাকিং
+        </h1>
+    </div>
+</div>
+
+<!-- Exercise Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-3">
+                    <i class="fas fa-filter text-info me-2"></i>
+                    ফিল্টার
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">স্তর</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-outline-success active" onclick="filterByLevel('all')">সব</button>
+                            {% for level in levels %}
+                                <button class="btn btn-outline-success" onclick="filterByLevel('{{ level[0] }}')">
+                                    {{ level[0] }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">ধরন</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-outline-info active" onclick="filterByCategory('all')">সব</button>
+                            {% for category in categories %}
+                                <button class="btn btn-outline-info" onclick="filterByCategory('{{ category[0] }}')">
+                                    {{ category[0] }}
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exercise Items -->
+<div class="row" id="exerciseItems">
+    {% for exercise in exercises %}
+    <div class="col-md-6 col-lg-4 mb-3 exercise-card" data-level="{{ exercise.level }}" data-category="{{ exercise.category }}">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="card-title mb-1">{{ exercise.name_bangla }}</h5>
+                        <h6 class="card-subtitle text-muted">{{ exercise.name_english }}</h6>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success">{{ exercise.level }}</span>
+                        <br>
+                        <span class="badge bg-info">{{ exercise.category }}</span>
+                    </div>
+                </div>
+                
+                <p class="card-text text-muted mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    {{ exercise.description }}
+                </p>
+                
+                <button class="btn btn-success w-100" onclick="showAddExerciseModal({{ exercise.id }}, '{{ exercise.name_bangla }}')">
+                    <i class="fas fa-plus me-1"></i>যোগ করুন
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Exercise Modal -->
+<div class="modal fade" id="addExerciseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ব্যায়াম যোগ করুন</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_exercise') }}">
+                <div class="modal-body">
+                    <input type="hidden" id="exerciseId" name="exercise_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">ব্যায়ামের নাম</label>
+                        <input type="text" class="form-control" id="exerciseName" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">সময়কাল (মিনিট)</label>
+                        <input type="number" class="form-control" name="duration" value="10" min="1" step="1">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">সেট সংখ্যা</label>
+                                <input type="number" class="form-control" name="sets" value="0" min="0" step="1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">বার সংখ্যা</label>
+                                <input type="number" class="form-control" name="reps" value="0" min="0" step="1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-clock me-2"></i>
+                        আপনি {{ exercise.name_bangla }} ব্যায়ামটি যোগ করতে যাচ্ছেন
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="submit" class="btn btn-primary">যোগ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterByLevel(level) {
+    const exerciseCards = document.querySelectorAll('.exercise-card');
+    const buttons = document.querySelectorAll('.btn-outline-success');
+    
+    // Update active button
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    exerciseCards.forEach(card => {
+        if (level === 'all' || card.dataset.level === level) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function filterByCategory(category) {
+    const exerciseCards = document.querySelectorAll('.exercise-card');
+    const buttons = document.querySelectorAll('.btn-outline-info');
+    
+    // Update active button
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    exerciseCards.forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function showAddExerciseModal(exerciseId, exerciseName) {
+    document.getElementById('exerciseId').value = exerciseId;
+    document.getElementById('exerciseName').value = exerciseName;
+    
+    const modal = new bootstrap.Modal(document.getElementById('addExerciseModal'));
+    modal.show();
+}
+</script>
+{% endblock %} 
